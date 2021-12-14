@@ -1,0 +1,242 @@
+---
+title: "mossbauer_materials"
+author: "me"
+date: "12/8/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(pracma)
+```
+
+```{r stainless steel}
+stainless <- read.delim("raw_data_materials/stainless_steel_3_1.txt") %>% tail(1000) %>% 
+  select(-2)
+names(stainless)[1] <- 'counts'
+stainless <- tibble::rownames_to_column(stainless, "time")
+
+stainless %>% 
+  mutate(time = as.numeric(time), counts = as.numeric(counts))
+
+stainless %>%  ggplot(aes(x = as.numeric(time), y = as.numeric(counts))) + 
+  geom_line() +
+  xlim(.004,.006) +
+  ylim(1500,2500)
+
+
+stainless %>%  ggplot(aes(x = as.numeric(time), y = as.numeric(counts))) + 
+  geom_point() +
+  xlim(.015,.017) +
+  ylim(1500,2500)
+
+stainless %>%  ggplot(aes(x = as.numeric(time), y = as.numeric(counts))) + 
+  geom_line() +
+  ylim(1500,2500)
+
+findpeaks((-as.numeric(stainless$counts)), npeaks=4, minpeakheight = -2000)
+
+#peaks @ 257, 788
+#with heights of 1921, 1875
+
+```
+
+```{r garnet}
+garnet <- read.delim("raw_data_materials/garnet_sandpaper_117.txt") %>% tail(999) %>% 
+  select(-2)
+names(garnet)[1] <- 'counts'
+garnet <- tibble::rownames_to_column(garnet, "time")
+
+garnet %>% 
+  mutate(time = as.numeric(time), counts = as.numeric(counts))
+
+garnet
+
+garnet %>%  ggplot(aes(x = as.numeric(time), y = as.numeric(counts))) + 
+  geom_line() +
+  xlim(.005,.007) 
+
+
+garnet %>%  ggplot(aes(x = as.numeric(time), y = as.numeric(counts))) + 
+  geom_line() +
+  xlim(.014,.016)
+
+garnet %>%  ggplot(aes(x = as.numeric(time), y = as.numeric(counts))) + 
+  geom_line() 
+findpeaks((-as.numeric(garnet$counts)), npeaks=8, minpeakheight = -645000)
+
+```
+```{r enriched}
+enriched <- read.delim("raw_data_materials/enriched_iron_plastic_disc_1_2.txt") %>% tail(999) %>% 
+  select(-2)
+names(enriched)[1] <- 'counts'
+enriched <- tibble::rownames_to_column(enriched, "time")
+
+enriched %>% 
+  mutate(time = as.numeric(time), counts = as.numeric(counts))
+
+
+enriched
+
+enriched %>%  ggplot(aes(x = as.numeric(time), y = as.numeric(counts))) + 
+  geom_line() +
+  xlim(.005,.007) 
+
+
+enriched %>%  ggplot(aes(x = as.numeric(time), y = as.numeric(counts))) + 
+  geom_line() +
+  xlim(.014,.016)
+
+enriched %>%  ggplot(aes(x = as.numeric(time), y = as.numeric(counts))) + 
+  geom_line() 
+```
+
+```{r rust}
+rust <- read.delim("raw_data_materials/rust_1_28.txt") %>% tail(999) %>% 
+  select(-2)
+names(rust)[1] <- 'counts'
+rust <- tibble::rownames_to_column(rust, "time")
+
+rust %>% 
+  mutate(time = as.numeric(time), counts = as.numeric(counts))
+
+
+rust
+
+rust %>%  ggplot(aes(x = as.numeric(time), y = as.numeric(counts))) + 
+  geom_line() +
+  xlim(.005,.007) 
+
+
+rust %>%  ggplot(aes(x = as.numeric(time), y = as.numeric(counts))) + 
+  geom_line() +
+  xlim(.014,.016)
+
+rust %>%  ggplot(aes(x = as.numeric(time), y = as.numeric(counts))) + 
+  geom_line() 
+```
+
+```{r beryllium}
+bery <- read.delim("raw_data_materials/be+fe4.3mg_1_2.txt") %>% tail(999) %>% 
+  select(-2)
+names(bery)[1] <- 'counts'
+bery <- tibble::rownames_to_column(bery, "time")
+
+bery %>% 
+  mutate(time = as.numeric(time), counts = as.numeric(counts))
+
+
+bery
+
+bery %>%  ggplot(aes(x = as.numeric(time), y = as.numeric(counts))) + 
+  geom_line() +
+  xlim(.005,.007) 
+
+
+bery %>%  ggplot(aes(x = as.numeric(time), y = as.numeric(counts))) + 
+  geom_line() +
+  xlim(.014,.016)
+
+bery %>%  ggplot(aes(x = as.numeric(time), y = as.numeric(counts))) + 
+  geom_line() 
+
+```
+
+
+
+```{r calibration}
+cali <- tibble(vmax = c(4.43,4.11,	3.64,3.16,2.69,2.37,1.74,1.42,0.87,	0.44), voltage = seq(500,50,-50))
+
+ggplot(cali, aes(x = voltage, y = vmax)) +
+  geom_point()+
+  theme_classic()+
+    theme(aspect.ratio=1) +
+  labs(title = 'Velocity Driver Calibration',
+       y = 'Max Velocity (cm/s)',
+       x = 'Voltage (mV)')
+
+```
+
+
+```{r alltogethernow}
+k300temp <- read.delim("raw_data_materials/fef2_cryo_300K_89.txt") %>% tail(999) %>% 
+  select(-2)
+names(k300temp)[1] <- 'counts'
+k300temp <- tibble::rownames_to_column(k300temp, "time")
+
+k300temp <- k300temp %>% 
+    mutate(time = as.numeric(time), counts = as.numeric(counts)/211161.42)
+
+garnet <- read.delim("raw_data_materials/garnet_sandpaper_117.txt") %>% tail(999) %>% 
+  select(-2)
+names(garnet)[1] <- 'counts'
+garnet <- tibble::rownames_to_column(garnet, "time")
+
+garnet <- garnet %>% 
+  mutate(time = as.numeric(time), counts = as.numeric(counts)/300140.64)
+
+stainless <- read.delim("raw_data_materials/stainless_steel_3_1.txt") %>% tail(999) %>% 
+  select(-2)
+names(stainless)[1] <- 'counts'
+stainless <- tibble::rownames_to_column(stainless, "time")
+
+stainless <- stainless %>% 
+  mutate(time = as.numeric(time), counts = as.numeric(counts)/2091.24)
+
+
+
+isomer <- tibble(time = k300temp$time*1000, FeF2 = k300temp$counts, Garnet = garnet$counts/1.5, Stainless_Steel = stainless$counts*1.05, velocity = -17.4*cos((time+.0781)*2*pi/(20.875)))
+
+
+
+isomer <- isomer %>% 
+  gather(
+    key = counts_mat,
+    value = gamma_counts,
+    -time,
+    -velocity
+  )
+isomer %>% ggplot(aes(x = time, y = gamma_counts, color = counts_mat)) +
+  geom_line() +
+      theme_classic() +
+      theme(aspect.ratio = 1) +
+      labs(title = 'Mossbauer Shift by Absorber Material',
+           x = 'Time (ms)',
+           y = 'Counts per Second', color = "Absorber Material") 
+
+
+isomer %>% ggplot(aes(x = time, y = gamma_counts, color = counts_mat)) +
+  geom_line() +
+      theme_classic() +
+      theme(aspect.ratio = 1) +
+      labs(title = 'Mossbauer Shift by Absorber Material First Zero',
+           x = 'Time (ms)',
+           y = 'Counts per Second', color = "Absorber Material")+
+    geom_vline(xintercept = 5.22)+
+  xlim(4,7)
+
+isomer %>% ggplot(aes(x = time, y = gamma_counts, color = counts_mat)) +
+  geom_line() +
+      theme_classic() +
+      theme(aspect.ratio = 1) +
+      labs(title = 'Mossbauer Shift by Absorber Material Second Zero',
+           x = 'Time (ms)',
+           y = 'Counts per Second', color = "Absorber Material")+
+    geom_vline(xintercept = 15.63)+
+  xlim(14,17)
+
+
+
+isomer %>% ggplot(aes(x = velocity, y = gamma_counts, color = counts_mat)) +
+  geom_line() +
+      theme_classic() +
+      theme(aspect.ratio = 1) +
+      labs(title = 'Mossbauer Shift by Source Velocity',
+           x = 'Velocity (mm/s)',
+           y = 'Counts per Second', color = "Absorber Material") +
+    scale_x_continuous(breaks = seq(-15,15,5))
+
+
+
+```

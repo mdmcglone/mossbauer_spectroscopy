@@ -1,0 +1,381 @@
+---
+title: "mossbauer_test"
+author: "medate: "11/18/2021"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(pracma)
+```
+
+```{r}
+k85temp <- read.delim("raw_data/fef2_cryo_85k_40.txt") %>% tail(1000) %>% 
+  select(-2)
+names(k85temp)[1] <- 'counts'
+k85temp <- tibble::rownames_to_column(k85temp, "time")
+
+k85temp %>% 
+  mutate(time = as.numeric(time), counts = as.numeric(counts))
+
+
+k190temp <- read.delim("raw_data/fef2_cryo_190K(3)_22.txt") %>% tail(1000) %>% 
+  select(-2)
+names(k190temp)[1] <- 'counts'
+k190temp <- tibble::rownames_to_column(k190temp, "time")
+
+k190temp %>% 
+    mutate(time = as.numeric(time), counts = as.numeric(counts))
+
+
+
+k300temp <- read.delim("raw_data/fef2_cryo_300K_89.txt") %>% tail(1000) %>% 
+  select(-2)
+names(k300temp)[1] <- 'counts'
+k300temp <- tibble::rownames_to_column(k300temp, "time")
+
+k300temp %>% 
+    mutate(time = as.numeric(time), counts = as.numeric(counts))
+
+
+k65temp <- read.delim("raw_data/fef2_cryo_65K_noon_25nov_23.txt") %>% tail(1000) %>% 
+  select(-2)
+names(k65temp)[1] <- 'counts'
+k65temp <- tibble::rownames_to_column(k65temp, "time")
+
+k65temp %>% 
+    mutate(time = as.numeric(time), counts = as.numeric(counts))
+
+ alltemp <- k85temp %>% 
+   mutate(counts_190 = k190temp$counts, counts_300 = k300temp$counts, counts_65 = k65temp$counts) %>% 
+   mutate(time_2 = seq(0,.01998,.00002)*1000) %>% 
+   mutate(velocity = -17.4*cos((time_2+.0781)*2*pi/(20.875)))
+ 
+ alltemp %>% tail(800) %>% head(150) %>% ggplot(aes(as.numeric(velocity), y = as.numeric(counts))) +
+   geom_line(color = 'red',alpha = .5, size = .2) +
+   geom_line(aes(y = as.numeric(counts_300)/1.8), color ='red', alpha = .5, size = .2) +
+   geom_line(aes(y = as.numeric(counts_190)*2), color ='orange', alpha = .5, size = .2) +
+    geom_line(aes(y = as.numeric(counts_65)*1.75), alpha = .5, size = .2) +
+   theme_classic() + 
+   labs(title = 'Mossbauer shift at Low Temps lower',
+        x = 'Velocity (mm/s)',
+        y = 'Counts')  +
+     #geom_vline(xintercept = 5.22) +  #first 0
+     geom_vline(xintercept = -17.4*cos((5.11+.0781)*2*pi/20.875)) +   #red troguh
+     geom_vline(xintercept = -17.4*cos((5.62+.0781)*2*pi/20.875)) +    #red troguh
+   xlim(-5,7.5)
+
+
+
+
+ alltemp %>% tail(300) %>% head(150) %>% ggplot(aes(x = as.numeric(velocity), y = as.numeric(counts))) +
+   geom_line(color = 'green',alpha = .5, size = .2) +
+   geom_line(aes(y = as.numeric(counts_300)/1.8), color ='red', alpha = .5, size = .2) +
+   geom_line(aes(y = as.numeric(counts_190)*2), color ='orange', alpha = .5, size = .2) +
+       geom_line(aes(y = as.numeric(counts_65)*1.75), alpha = .5, size = .2) +
+
+   theme_classic() + 
+   labs(title = 'Mossbauer shift at Low Temps upper',
+        x = 'Velocity (mm/s)',
+        y = 'Counts') +
+   xlim(7.5,-5)+
+      
+   #geom_vline(xintercept = 15.66) #third 0
+       geom_vline(xintercept =  -17.4*cos((15.12+.0781)*2*pi/20.875)) +    #red troguh
+      geom_vline(xintercept =  -17.4*cos((15.625+.0781)*2*pi/20.875))    #red troguh
+#view(alltemp)
+ 
+  alltemp %>% ggplot(aes(as.numeric(time), y = as.numeric(counts))) +
+   geom_line(color = 'green',alpha = .5, size = .2) +
+  # geom_line(aes(y = as.numeric(counts_300)), color ='red', alpha = .5, size = .2) +
+ #  geom_line(aes(y = as.numeric(counts_190)), color ='orange', alpha = .5, size = .2) +
+  #      geom_line(aes(y = as.numeric(counts_65)*1.75), alpha = .5, size = .2) +
+
+   theme_classic() + 
+   labs(title = 'Mossbauer shift at Low Temps',
+        x = 'Time (ms)',
+        y = 'Counts') +
+    xlim(.001,.020)+
+    ylim(100000,200000)
+
+  findpeaks((-as.numeric(k300temp$counts)), npeaks=8, minpeakheight = -270000)
+
+
+findpeaks((-as.numeric(k190temp$counts)), npeaks=8, minpeakheight = -70000)
+
+findpeaks((-as.numeric(k85temp$counts)), npeaks=8, minpeakheight = -130000)
+
+  
+```
+
+
+
+```{r oscilloscope}
+data <- read.csv(file = 'raw_data/t0001all.csv')
+
+view(data)
+
+data %>% ggplot(aes(x = TIME, y= CH1)) +
+  geom_line(color = 'red') +
+  geom_line(aes(y = CH2), color = 'blue') +
+  geom_hline(yintercept = 0)+
+  #xlim(-.001,.001)+
+ geom_vline(xintercept = .00005)
+
+
+dog <- tibble(ch2 = as.numeric(data$CH2), time = as.numeric(data$TIME)*1000)
+fit <- nls(ch2 ~ a*cos(w*time+phi), data = dog,
+           start = list(a = 2,w = .2,phi = .5))
+summary(fit)
+plot(ch2 ~ time, data = dog)
+curve(predict(fit, newdata = data.frame(time = x)), from = -.05, to = .05, add =TRUE)
+
+# nls(temp~C+alpha*sin(W*time+phi),
+#    start=list(C=27.63415, alpha=27.886, W=0.0652, phi=14.9286))
+# summary(fit.nls)
+# plot(fit.nls$fitted, type="l", col="red", xlim=c(1, 900), pch=19, ann=FALSE, xaxt="n", 
+# axt="n")
+# 
+
+# dog <- tibble(counts60 = cs_cu_60norm$counts60, nums)
+# fit <- nls(counts60 ~ a * dnorm(nums, mean, sd), data = dog, 
+#          start = list(mean = 517, sd = 35, a = 1e8))
+# summary(fit)
+# plot(counts60 ~ nums, data = dog)
+# curve(predict(fit, newdata = data.frame(nums = x)), from = 400, to = 600, add = TRUE)
+
+
+
+
+
+```
+
+
+
+
+
+```{r quadrupoles}
+k65temp <- read.delim("raw_data/fef2_cryo_65K_noon_25nov_23.txt") %>% tail(999) %>% head(899) %>%  
+  select(-2)
+names(k65temp)[1] <- 'counts'
+k65temp <- tibble::rownames_to_column(k65temp, "time")
+
+k65temp %>% 
+    mutate(time = as.numeric(time), counts = as.numeric(counts))
+
+k70temp <- read.delim("raw_data/fef2_cryo_70K_joe_restarted_29.txt")  %>% tail(899)
+names(k70temp)[1] <- 'time'
+names(k70temp)[3] <- 'counts'
+
+
+k78temp <- read.delim("raw_data/fef2_cryo_78K_24.txt") %>% tail(999) %>% head(899) %>%  
+  select(-2)
+names(k78temp)[1] <- 'counts'
+k78temp <- tibble::rownames_to_column(k78temp, "time")
+
+k78temp
+
+
+both_quads <- k65temp %>% 
+  mutate(counts_70 = k70temp$counts, counts_78 = k78temp$counts) %>% 
+  mutate(time_2 = seq(.00002,.01798,.00002)*1000) %>% 
+  mutate(velocity = -17.4*cos((time_2+.0781)*2*pi/(20.875))) 
+
+  both_quads %>% ggplot(aes(as.numeric(time_2), y = as.numeric(counts))) +
+   geom_line(color = 'black',alpha = .5, size = .2) +
+    geom_line(aes(y = as.numeric(counts_70)/1.9), alpha = .5, size = .2, color = 'purple') +
+        geom_line(aes(y = as.numeric(counts_78)*1.02), alpha = .5, size = .2, color = 'red') +
+   theme_classic() + 
+   labs(title = 'Mossbauer shift at Low Temps',
+        x = 'Time (ms)',
+        y = 'Counts') 
+  
+   both_quads %>% ggplot(aes(as.numeric(time_2), y = as.numeric(counts))) +
+   geom_line(color = 'black',alpha = .5, size = .2) +
+    geom_line(aes(y = as.numeric(counts_70)/1.9), alpha = .5, size = .2, color = 'purple') +
+         geom_line(aes(y = as.numeric(counts_78)*1.02), alpha = .5, size = .2, color = 'blue') +
+   theme_classic() + 
+   labs(title = 'Mossbauer shift at Low Temps',
+        x = 'Time (ms)',
+        y = 'Counts') +
+        xlim(4,7)
+
+   
+    both_quads %>% ggplot(aes(as.numeric(time_2), y = as.numeric(counts))) +
+   geom_line(color = 'black',alpha = .5, size = .2) +
+    geom_line(aes(y = as.numeric(counts_70)/1.9), alpha = .5, size = .2, color = 'purple') +
+    geom_line(aes(y = as.numeric(counts_78)*1.02), alpha = .5, size = .2, color = 'blue') +
+   theme_classic() + 
+   labs(title = 'Mossbauer shift at Low Temps',
+        x = 'Time (ms)',
+        y = 'Counts') +
+       xlim(14,17)
+
+  
+  
+```
+
+```{r bigstack_norm}
+
+k85temp <- read.delim("raw_data/fef2_cryo_85k_40.txt") %>% tail(999) %>% head(899) %>% 
+  select(-2)
+names(k85temp)[1] <- 'counts'
+k85temp <- tibble::rownames_to_column(k85temp, "time")
+
+k85temp %>% 
+  mutate(time = as.numeric(time), counts = as.numeric(counts))
+
+
+k190temp <- read.delim("raw_data/fef2_cryo_190K(3)_22.txt") %>% tail(999) %>% head(899) %>% 
+  select(-2)
+names(k190temp)[1] <- 'counts'
+k190temp <- tibble::rownames_to_column(k190temp, "time")
+
+k190temp %>% 
+    mutate(time = as.numeric(time), counts = as.numeric(counts))
+
+k300temp <- read.delim("raw_data/fef2_cryo_300K_89.txt") %>% tail(999) %>% head(899) %>% 
+  select(-2)
+names(k300temp)[1] <- 'counts'
+k300temp <- tibble::rownames_to_column(k300temp, "time")
+
+k300temp %>% 
+    mutate(time = as.numeric(time), counts = as.numeric(counts))
+
+
+k65temp <- read.delim("raw_data/fef2_cryo_65K_noon_25nov_23.txt") %>% tail(999) %>% head(899) %>% 
+  select(-2)
+names(k65temp)[1] <- 'counts'
+k65temp <- tibble::rownames_to_column(k65temp, "time")
+
+k65temp %>% 
+    mutate(time = as.numeric(time), counts = as.numeric(counts))
+
+
+k70temp <- read.delim("raw_data/fef2_cryo_70K_joe_restarted_29.txt")  %>% tail(899)
+names(k70temp)[1] <- 'time'
+names(k70temp)[3] <- 'counts'
+
+
+k78temp <- read.delim("raw_data/fef2_cryo_78K_24.txt") %>% tail(999) %>% head(899) %>%  
+  select(-2)
+names(k78temp)[1] <- 'counts'
+k78temp <- tibble::rownames_to_column(k78temp, "time")
+
+ bigstack <- k65temp %>% 
+    mutate(counts_190 = k190temp$counts, counts_300 = k300temp$counts, counts_85 = k85temp$counts,
+           counts_70 = k70temp$counts, counts_78 = k78temp$counts) %>% 
+   mutate(time_2 = seq(.00002,.01798,.00002)*1000) %>% 
+   mutate(velocity = -17.4*cos((time_2+.0781)*2*pi/(20.875))) 
+
+
+
+x <- bigstack
+
+x$counts <- as.numeric(x$counts) / 49708.28 / 1.1
+x$counts_70 <- as.numeric(x$counts_70) / 89247.594 / 1.1
+x$counts_78 <- as.numeric(x$counts_78) / 54653.08 * 1.1
+x$counts_85 <- as.numeric(x$counts_85) / 96683.62 * 1.2
+x$counts_190 <-  as.numeric(x$counts_190) / 52474.6 * 1.32
+x$counts_300 <-   as.numeric(x$counts_300) / 211161.42 * 1.5
+
+  
+x <- x %>% 
+  gather(
+    key = counts_num,
+    value = gamma_counts,
+    -time,
+    -time_2,
+    -velocity
+  )
+
+x$counts_num <- substr(x$counts_num, 8, 10)
+x$counts_num <- ifelse(x$counts_num == "", 65, x$counts_num)
+arrange(x, desc(as.numeric(counts_num)))
+x %>%
+  ggplot(
+    aes(x = time_2, y = gamma_counts, color = counts_num)
+    ) +
+      geom_line() +
+      theme_classic() +
+      theme(aspect.ratio = 1) +
+      labs(title = 'Mossbauer Shift Second Zero at Temperatures',
+           x = 'Time (ms)',
+           y = 'Counts per Second', color = "Temp in Kelvin") +
+      xlim(14, 17)+
+    geom_vline(xintercept = 15.63)
+
+
+x %>%
+  ggplot(
+    aes(x = time_2, y = gamma_counts, color = counts_num)
+    ) +
+      geom_line() +
+      theme_classic() +
+      theme(aspect.ratio = 1) +
+      labs(title = 'Mossbauer Shift First Zero at Temperatures',
+           x = 'Time (ms)',
+           y = 'Counts per Second', color = "Temp in Kelvin") +
+      xlim(4, 7) +
+  geom_vline(xintercept = 5.29)
+
+x %>%
+  ggplot(
+    aes(x = time_2, y = gamma_counts, color = counts_num)
+    ) +
+      geom_line() +
+      theme_classic() +
+      theme(aspect.ratio = 1) +
+      labs(title = 'Mossbauer Shift at Temperatures',
+           x = 'Time (ms)',
+           y = 'Counts per Second', color = "Temp in Kelvin") 
+
+x %>%
+  ggplot(
+    aes(x = velocity, y = gamma_counts, color = counts_num)
+    ) +
+      geom_line() +
+      theme_classic() +
+      theme(aspect.ratio = 1) +
+      labs(title = 'Mossbauer Shift by Source Velocity',
+           x = 'Velocity (mm/s)',
+           y = 'Counts per Second', color = "Temp in Kelvin")  +
+  scale_x_continuous(breaks = seq(-15,15,5))
+
+ x<- x %>% 
+   mutate(energy_triangle = velocity/(3*10^11)*14.41)
+view(x)
+
+
+x %>%
+  ggplot(
+    aes(x = energy_triangle, y = gamma_counts, color = counts_num)
+    ) +
+      geom_line() +
+      theme_classic() +
+      theme(aspect.ratio = 1) +
+      labs(title = 'Mossbauer Shift by energy',
+           x = 'Energy Shift (keV)',
+           y = 'Counts per Second', color = "Temp in Kelvin") 
+
+
+
+
+ 
+
+```
+
+
+```{r fits}
+
+bigstack <- bigstack %>% head(268)
+dog <- tibble(counts_300 = bigstack$counts_300, time = bigstack$time_2)
+fit <- nls(as.numeric(counts_300) ~ a * dnorm(time, mean, sd), data = dog, 
+         start = list(mean = 5.12, sd = .1, a = 1e8))
+summary(fit)
+plot(counts_300 ~ time, data = dog)
+curve(predict(fit, newdata = data.frame(time = x)), from = -10, to = 10, add = TRUE)
+
+```
